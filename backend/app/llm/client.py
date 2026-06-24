@@ -9,10 +9,13 @@ from __future__ import annotations
 
 import contextvars
 import json
+import logging
 import time
 from collections.abc import Callable
 
 from app.config import settings
+
+log = logging.getLogger("llm")
 
 # Injected into EVERY agent's system prompt. Central guardrails so no single agent
 # can drift: no fabrication, no acting, escalate-on-uncertainty, stay in scope.
@@ -119,6 +122,7 @@ def complete_json(
     from langchain_core.messages import HumanMessage, SystemMessage
 
     raw = ""
+    fell_back = False
     try:
         llm = chat_model(role)
         resp = llm.invoke(
@@ -126,9 +130,14 @@ def complete_json(
         )
         raw = resp.content if isinstance(resp.content, str) else str(resp.content)
         parsed = _extract_json(raw)
-    except (json.JSONDecodeError, ValueError, Exception):  # resilient fallback
+    except Exception as e:  # resilient fallback — never crash the worker
+        # Visibly surface the failure instead of silently masking it.
+        log.warning("LLM call failed for role=%s: %s — falling back to mock", role, e)
         parsed = mock(user)
-        raw = raw or "[error -> mock fallback]"
+        raw = f"[error -> mock fallback] {e}" if not raw else f"{raw}\n[parse error -> mock] {e}"
+        fell_back = True
 
-    _record(role, full_system, user, raw, parsed, False, int((time.monotonic() - started) * 1000))
+    # `mock` is True whenever the deterministic stub was used, including on fallback,
+    # so the trace truthfully reflects that this was not a real model decision.
+    _record(role, full_system, user, raw, parsed, fell_back, int((time.monotonic() - started) * 1000))
     return parsed

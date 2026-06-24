@@ -13,6 +13,7 @@ from langgraph.graph import END, START, StateGraph
 from sqlalchemy.orm import Session
 
 from app.agents import ar_clerk, bill_handler, categorizer, closer, consolidator
+from app.agents.base import record_trace
 from app.events.types import (
     AR_OVERDUE,
     BANK_LINE,
@@ -61,6 +62,9 @@ def _classify(state: GState) -> GState:
     route = decision.get("route", default)
     if route not in ROUTING.values():
         route = default
+    # Persist the Orchestrator's routing decision before a specialist overwrites
+    # the last-call buffer (otherwise routing decisions are missing from traces).
+    record_trace(_db_ctx.get(), agent="Orchestrator", confidence=1.0, commit=True)
     state["route"] = route
     return state
 

@@ -6,20 +6,23 @@ continuous consolidation.
 """
 from __future__ import annotations
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import (
     Account,
     BankTransaction,
     Bill,
+    Correction,
     Invoice,
     JournalEntry,
     ProposedAction,
     AuditLog,
 )
+from app.config import settings
 from app.events import bus
 from app.events.types import Event, ENTRY_POSTED
-from app.services import ledger, vectors
+from app.services import ledger, rules, vectors
 
 
 class ApprovalError(RuntimeError):
@@ -42,6 +45,12 @@ def _validate_accounts(db: Session, entity_id: int, lines: list[dict]) -> None:
 
 def _apply_book_journal_entry(db: Session, payload: dict) -> dict:
     """payload: {entity_id, memo, date?, lines[], agent, bank_transaction_id?, memory?}"""
+    # Idempotency: never book a bank line that a prior approval already matched
+    # (blocks a stale duplicate draft from double-posting the same transaction).
+    if payload.get("bank_transaction_id"):
+        bt = db.get(BankTransaction, payload["bank_transaction_id"])
+        if bt and bt.status == "matched":
+            raise ApprovalError("bank line already booked")
     _validate_accounts(db, payload["entity_id"], payload["lines"])
     entry = ledger.create_draft_entry(
         db,
@@ -150,18 +159,117 @@ def approve(db: Session, action: ProposedAction, user_id: str) -> AuditLog:
     return audit
 
 
-def reject(db: Session, action: ProposedAction, user_id: str) -> AuditLog:
+def auto_approve_if_eligible(db: Session, action: ProposedAction) -> AuditLog | None:
+    """Gated autonomy: finalize a draft without a human click only when it came
+    from an `auto_approve` Rule and clears the confidence floor. Still posts through
+    the normal approve() path — fully audited (actor `system:rule:<id>`) and
+    reversible. Returns the AuditLog if auto-approved, else None."""
+    if not settings.auto_approve_enabled:
+        return None
+    payload = action.payload or {}
+    rule_id = payload.get("rule_id")
+    if not (payload.get("auto_approve") and rule_id):
+        return None
+    if float(action.confidence) < settings.auto_approve_min_confidence:
+        return None
+    return approve(db, action, f"system:rule:{rule_id}")
+
+
+def reject(db: Session, action: ProposedAction, user_id: str, reason: str = "") -> AuditLog:
     if action.status != "pending":
         raise ApprovalError(f"action already {action.status}")
     action.status = "rejected"
+    # The reject reason is a learning signal — record it as a Correction.
+    if reason:
+        db.add(
+            Correction(
+                proposed_action_id=action.id,
+                user_id=user_id,
+                kind="reject",
+                reason=reason,
+                before=action.payload,
+                after={},
+            )
+        )
     audit = AuditLog(
         user_id=user_id,
         agent=action.agent,
         action="rejected",
         proposed_action_id=action.id,
         before={"status": "pending"},
-        after={"status": "rejected"},
+        after={"status": "rejected", "reason": reason},
     )
     db.add(audit)
     db.commit()
     return audit
+
+
+def apply_edit(
+    db: Session,
+    action: ProposedAction,
+    user_id: str,
+    *,
+    account_code: str | None,
+    reason: str,
+    create_rule: bool,
+    auto_approve: bool,
+) -> AuditLog:
+    """Human corrects a draft, then approves it. Records a Correction (the richest
+    learning signal), optionally codifies the correction as a Rule, and posts."""
+    if action.status != "pending":
+        raise ApprovalError(f"action already {action.status}")
+
+    before = dict(action.payload)
+    payload = dict(action.payload)
+    entity_id = payload.get("entity_id")
+
+    # Re-point the GL (non-cash) line to the corrected account.
+    if account_code:
+        new_gl = db.scalar(
+            select(Account).where(
+                Account.entity_id == entity_id, Account.code == account_code
+            )
+        )
+        if new_gl is None:
+            raise ApprovalError(f"account {account_code} not found for entity {entity_id}")
+        for line in payload.get("lines", []):
+            acct = db.get(Account, line["account_id"])
+            if acct and acct.code != "1000":  # the GL/expense side, not cash
+                line["account_id"] = new_gl.id
+        payload["memo"] = f"{payload.get('description', '')} -> {new_gl.name}".strip()
+        if payload.get("memory"):
+            payload["memory"]["meta"] = {
+                "account_code": new_gl.code,
+                "account_name": new_gl.name,
+            }
+        payload["rule_id"] = None  # a human correction overrides any rule provenance
+        payload["auto_approve"] = False
+
+    after = dict(payload)
+    after["account_code"] = account_code
+    db.add(
+        Correction(
+            proposed_action_id=action.id,
+            user_id=user_id,
+            kind="edit",
+            reason=reason,
+            before=before,
+            after=after,
+        )
+    )
+
+    # Optionally codify the correction as a reusable rule.
+    if create_rule and account_code and payload.get("description"):
+        rules.upsert(
+            db,
+            entity_id=entity_id,
+            pattern=str(payload["description"]).split()[0],
+            account_code=account_code,
+            auto_approve=auto_approve,
+            source="correction",
+            created_by=user_id,
+        )
+
+    action.payload = payload
+    db.flush()
+    return approve(db, action, user_id)

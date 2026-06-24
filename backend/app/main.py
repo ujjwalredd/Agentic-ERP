@@ -11,6 +11,7 @@ from app.routers import (
     ledger,
     observability,
     reports,
+    rules,
     simulate,
     webhooks,
 )
@@ -24,10 +25,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Flow — Agentic Accounting ERP", lifespan=lifespan)
 
+_origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
-    allow_credentials=True,
+    allow_origins=_origins,
+    # Browsers reject `*` origin combined with credentials; disable creds in that case.
+    allow_credentials="*" not in _origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -39,6 +42,7 @@ app.include_router(entities.router)
 app.include_router(simulate.router)
 app.include_router(webhooks.router)
 app.include_router(observability.router)
+app.include_router(rules.router)
 
 
 @app.get("/health")

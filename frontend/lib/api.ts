@@ -39,15 +39,17 @@ export const api = {
   actions: (status = "pending"): Promise<ProposedAction[]> =>
     req(`/inbox/actions?status=${status}`),
   approve: (id: number) =>
-    req(`/inbox/actions/${id}/approve`, {
-      method: "POST",
-      body: JSON.stringify({ user_id: "demo-user" }),
-    }),
-  reject: (id: number) =>
+    req(`/inbox/actions/${id}/approve`, { method: "POST" }),
+  reject: (id: number, reason = "") =>
     req(`/inbox/actions/${id}/reject`, {
       method: "POST",
-      body: JSON.stringify({ user_id: "demo-user" }),
+      body: JSON.stringify({ reason }),
     }),
+  edit: (
+    id: number,
+    body: { account_code?: string; reason?: string; create_rule?: boolean; auto_approve?: boolean }
+  ) =>
+    req(`/inbox/actions/${id}/edit`, { method: "POST", body: JSON.stringify(body) }),
   audit: (): Promise<AuditLog[]> => req(`/inbox/audit`),
   entries: (entityId?: number, status?: string) => {
     const q = new URLSearchParams();
@@ -66,6 +68,16 @@ export const api = {
   traces: (limit = 100) => req(`/observability/traces?limit=${limit}`),
   obsStats: () => req(`/observability/stats`),
   trainingData: () => req(`/observability/training-data?labeled_only=true`),
+  rules: () => req(`/rules`),
+  createRule: (body: {
+    entity_id?: number | null;
+    match_type?: string;
+    pattern: string;
+    account_code: string;
+    auto_approve?: boolean;
+    min_confidence?: number;
+  }) => req(`/rules`, { method: "POST", body: JSON.stringify(body) }),
+  deleteRule: (id: number) => req(`/rules/${id}`, { method: "DELETE" }),
 };
 
 export const TRAINING_JSONL_URL = `${BASE}/observability/training-data.jsonl`;

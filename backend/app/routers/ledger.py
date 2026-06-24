@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.db.base import get_db
 from app.db.models import Account, BankTransaction, JournalEntry
+from app.security import current_user
 
 router = APIRouter(prefix="/ledger", tags=["ledger"])
 
@@ -13,6 +14,7 @@ def journal_entries(
     entity_id: int | None = None,
     status: str | None = None,
     db: Session = Depends(get_db),
+    user: str = Depends(current_user),
 ):
     stmt = select(JournalEntry).order_by(JournalEntry.created_at.desc())
     if entity_id:
@@ -46,7 +48,10 @@ def journal_entries(
 
 @router.get("/bank")
 def bank_transactions(
-    entity_id: int | None = None, status: str | None = None, db: Session = Depends(get_db)
+    entity_id: int | None = None,
+    status: str | None = None,
+    db: Session = Depends(get_db),
+    user: str = Depends(current_user),
 ):
     stmt = select(BankTransaction).order_by(BankTransaction.id)
     if entity_id:
@@ -68,7 +73,11 @@ def bank_transactions(
 
 
 @router.get("/accounts")
-def accounts(entity_id: int | None = None, db: Session = Depends(get_db)):
+def accounts(
+    entity_id: int | None = None,
+    db: Session = Depends(get_db),
+    user: str = Depends(current_user),
+):
     stmt = select(Account).order_by(Account.entity_id, Account.code)
     if entity_id:
         stmt = stmt.where(Account.entity_id == entity_id)

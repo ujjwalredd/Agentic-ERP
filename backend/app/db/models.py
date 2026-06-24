@@ -189,3 +189,44 @@ class VectorDoc(Base):
     text: Mapped[str] = mapped_column(Text)
     embedding: Mapped[list[float]] = mapped_column(Vector(settings.embedding_dim))
     meta: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+
+class Rule(Base):
+    """Explicit, codified accounting knowledge. Recurring approved/corrected
+    patterns become deterministic rules — no LLM, so no hallucination. A matched
+    rule can pre-fill the GL account and (if auto_approve) let the draft finalize
+    without a human click."""
+
+    __tablename__ = "rules"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    entity_id: Mapped[int | None] = mapped_column(
+        ForeignKey("entities.id"), nullable=True
+    )  # null = applies to all entities
+    match_type: Mapped[str] = mapped_column(String(20), default="vendor_contains")  # | regex
+    pattern: Mapped[str] = mapped_column(String(255))
+    account_code: Mapped[str] = mapped_column(String(20))
+    tags: Mapped[dict] = mapped_column(JSONB, default=dict)
+    auto_approve: Mapped[bool] = mapped_column(Boolean, default=False)
+    min_confidence: Mapped[float] = mapped_column(Numeric(4, 3), default=0.9)
+    source: Mapped[str] = mapped_column(String(20), default="manual")  # manual|correction|approval
+    hits: Mapped[int] = mapped_column(Integer, default=0)
+    created_by: Mapped[str] = mapped_column(String(80), default="demo-user")
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class Correction(Base):
+    """The richest learning signal: what a human changed about an agent's proposal
+    and why. Edits and reject-reasons become high-weight training examples and seed
+    new Rules."""
+
+    __tablename__ = "corrections"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    proposed_action_id: Mapped[int] = mapped_column(ForeignKey("proposed_actions.id"))
+    user_id: Mapped[str] = mapped_column(String(80))
+    kind: Mapped[str] = mapped_column(String(10))  # edit | reject
+    reason: Mapped[str] = mapped_column(Text, default="")
+    before: Mapped[dict] = mapped_column(JSONB, default=dict)
+    after: Mapped[dict] = mapped_column(JSONB, default=dict)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())

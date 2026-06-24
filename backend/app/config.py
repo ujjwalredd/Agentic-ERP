@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     # Identity recorded in the audit log when a token is presented.
     api_user: str = "controller@demo"
 
+    # --- gated autonomy ---------------------------------------------------
+    # Allow drafts matched by an auto_approve Rule to finalize without a human
+    # click (still fully audited + reversible). Confidence floor for that path.
+    auto_approve_enabled: bool = True
+    auto_approve_min_confidence: float = 0.95
+
     # Channel names for the Redis event bus.
     event_channel: str = "flow.events"
 

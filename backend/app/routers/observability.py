@@ -12,13 +12,19 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.base import get_db
-from app.db.models import AgentTrace, AuditLog, ProposedAction
+from app.db.models import AgentTrace, AuditLog, Correction, ProposedAction
+from app.security import current_user
 
 router = APIRouter(prefix="/observability", tags=["observability"])
 
 
 @router.get("/traces")
-def traces(agent: str | None = None, limit: int = 100, db: Session = Depends(get_db)):
+def traces(
+    agent: str | None = None,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    user: str = Depends(current_user),
+):
     stmt = select(AgentTrace).order_by(AgentTrace.timestamp.desc()).limit(limit)
     if agent:
         stmt = stmt.where(AgentTrace.agent == agent)
@@ -41,7 +47,7 @@ def traces(agent: str | None = None, limit: int = 100, db: Session = Depends(get
 
 
 @router.get("/stats")
-def stats(db: Session = Depends(get_db)):
+def stats(db: Session = Depends(get_db), user: str = Depends(current_user)):
     by_agent = db.execute(
         select(
             AgentTrace.agent,
@@ -69,7 +75,13 @@ def stats(db: Session = Depends(get_db)):
 
 
 def _labeled_rows(db: Session, only_labeled: bool):
-    """Join trace -> proposed action -> human decision to build (input, output, label)."""
+    """Join trace -> proposed action -> human decision to build (input, output, label).
+    Human corrections are folded in as the highest-signal examples (label
+    'corrected', carrying the reason + before/after diff)."""
+    corrections = {}
+    for c in db.scalars(select(Correction)):
+        corrections.setdefault(c.proposed_action_id, c)
+
     rows = db.execute(
         select(AgentTrace, ProposedAction, AuditLog)
         .join(ProposedAction, ProposedAction.id == AgentTrace.proposed_action_id)
@@ -78,8 +90,13 @@ def _labeled_rows(db: Session, only_labeled: bool):
     ).all()
     out = []
     for trace, action, audit in rows:
-        label = audit.action if audit else action.status  # approved/rejected/pending
-        if only_labeled and label not in ("approved", "rejected"):
+        corr = corrections.get(action.id)
+        label = (
+            "corrected"
+            if corr and corr.kind == "edit"
+            else (audit.action if audit else action.status)
+        )
+        if only_labeled and label not in ("approved", "rejected", "corrected"):
             continue
         out.append(
             {
@@ -89,21 +106,35 @@ def _labeled_rows(db: Session, only_labeled: bool):
                 "input": trace.user_prompt,
                 "output": trace.parsed_decision,
                 "confidence": float(trace.confidence),
-                # supervision signal: did the human accept the agent's proposal?
+                # supervision signal: did the human accept, reject, or correct it?
                 "human_label": label,
                 "reward": 1 if label == "approved" else (0 if label == "rejected" else None),
+                # the richest signal: what the human changed and why
+                "correction": (
+                    {"reason": corr.reason, "before": corr.before, "after": corr.after}
+                    if corr
+                    else None
+                ),
             }
         )
     return out
 
 
 @router.get("/training-data")
-def training_data(labeled_only: bool = True, db: Session = Depends(get_db)):
+def training_data(
+    labeled_only: bool = True,
+    db: Session = Depends(get_db),
+    user: str = Depends(current_user),
+):
     """Labeled corpus as JSON (each row = one supervised example)."""
     return _labeled_rows(db, labeled_only)
 
 
 @router.get("/training-data.jsonl", response_class=PlainTextResponse)
-def training_data_jsonl(labeled_only: bool = True, db: Session = Depends(get_db)):
+def training_data_jsonl(
+    labeled_only: bool = True,
+    db: Session = Depends(get_db),
+    user: str = Depends(current_user),
+):
     """Same corpus as downloadable JSONL — ready for an SFT / eval pipeline."""
     return "\n".join(json.dumps(r) for r in _labeled_rows(db, labeled_only))

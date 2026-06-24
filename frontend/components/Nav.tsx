@@ -6,6 +6,7 @@ const links = [
   { href: "/inbox", label: "Approval Inbox" },
   { href: "/reports", label: "Consolidated P&L" },
   { href: "/ledger", label: "Ledger & Audit" },
+  { href: "/rules", label: "Rules" },
   { href: "/observability", label: "AI Observability" },
   { href: "/entities", label: "Entities & CoA" },
 ];
