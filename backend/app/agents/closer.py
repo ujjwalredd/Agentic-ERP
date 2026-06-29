@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.agents import reconciler, reporter
-from app.agents.base import propose
+from app.agents.base import pending_exists, propose
 from app.db.models import BankTransaction, ProposedAction
 from app.llm.client import complete_json
 
@@ -32,6 +32,14 @@ def _mock(_user: str, unmatched: int) -> dict:
 
 def run(db: Session, data: dict) -> list[ProposedAction]:
     entity_id = data["entity_id"]
+
+    # Idempotency: if a close review for this entity is already pending, re-firing
+    # the close must not duplicate the review note or its reconciler/reporter fan-out.
+    # (`close_entity_id` is a dedicated key only the Closer sets, so this never
+    # collides with other agents' notes for the same entity.)
+    if pending_exists(db, "close_entity_id", entity_id, action_type="note"):
+        return []
+
     unmatched = db.scalar(
         select(BankTransaction)
         .where(
@@ -66,7 +74,11 @@ def run(db: Session, data: dict) -> list[ProposedAction]:
             action_type="note",
             summary=f"Close review — {data.get('entity', entity_id)}",
             confidence=decision.get("confidence", 0.8),
-            payload={"note": decision.get("anomaly"), "entity_id": entity_id},
+            payload={
+                "note": decision.get("anomaly"),
+                "entity_id": entity_id,
+                "close_entity_id": entity_id,  # idempotency marker (Closer-only key)
+            },
             source_event_id=data.get("source_event_id"),
         )
     ]

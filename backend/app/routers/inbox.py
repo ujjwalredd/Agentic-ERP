@@ -5,11 +5,14 @@ from sqlalchemy.orm import Session
 from app.db.base import get_db
 from app.db.models import AuditLog, ProposedAction
 from app.schemas import AuditLogOut, EditRequest, ProposedActionOut, RejectRequest
-from app.security import current_user
+from app.security import current_user, require_role
 from app.services import approvals
 from app.services.approvals import ApprovalError
 
 router = APIRouter(prefix="/inbox", tags=["inbox"])
+
+# Write actions require a controller; reads accept any authenticated principal.
+controller = require_role("controller")
 
 
 @router.get("/actions", response_model=list[ProposedActionOut])
@@ -28,7 +31,7 @@ def list_actions(
 def approve_action(
     action_id: int,
     db: Session = Depends(get_db),
-    user: str = Depends(current_user),
+    user: str = Depends(controller),
 ):
     action = db.get(ProposedAction, action_id)
     if not action:
@@ -44,7 +47,7 @@ def reject_action(
     action_id: int,
     body: RejectRequest | None = None,
     db: Session = Depends(get_db),
-    user: str = Depends(current_user),
+    user: str = Depends(controller),
 ):
     action = db.get(ProposedAction, action_id)
     if not action:
@@ -60,7 +63,7 @@ def edit_action(
     action_id: int,
     body: EditRequest,
     db: Session = Depends(get_db),
-    user: str = Depends(current_user),
+    user: str = Depends(controller),
 ):
     """Correct a draft (re-categorize), optionally codify it as a rule, then approve."""
     action = db.get(ProposedAction, action_id)

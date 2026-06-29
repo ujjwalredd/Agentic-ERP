@@ -25,6 +25,25 @@ from app.db.base import Base
 ACCOUNT_TYPES = ("asset", "liability", "equity", "revenue", "expense")
 ENTRY_STATUS = ("draft", "posted")
 ACTION_STATUS = ("pending", "approved", "rejected")
+BILL_STATUS = ("staged", "booked", "paid")
+INVOICE_STATUS = ("open", "overdue", "reminded", "paid")
+
+
+USER_ROLES = ("controller", "viewer")
+
+
+class User(Base):
+    """A human operator. `controller` can approve/reject/edit + manage rules;
+    `viewer` is read-only. The login identity (email) is what gets stamped into
+    the immutable AuditLog, so accountability is per-person, not a shared token."""
+
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(120), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(20), default="controller")  # USER_ROLES
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, server_default=func.now())
 
 
 class Entity(Base):
@@ -104,7 +123,7 @@ class Bill(Base):
     vendor: Mapped[str] = mapped_column(String(120))
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2))
     due_date: Mapped[dt.date] = mapped_column(Date)
-    status: Mapped[str] = mapped_column(String(20), default="staged")  # staged/paid
+    status: Mapped[str] = mapped_column(String(20), default="staged")  # BILL_STATUS
     lines: Mapped[dict] = mapped_column(JSONB, default=dict)
 
 
@@ -116,7 +135,7 @@ class Invoice(Base):
     customer: Mapped[str] = mapped_column(String(120))
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2))
     due_date: Mapped[dt.date] = mapped_column(Date)
-    status: Mapped[str] = mapped_column(String(20), default="open")  # open/paid/overdue
+    status: Mapped[str] = mapped_column(String(20), default="open")  # INVOICE_STATUS
     lines: Mapped[dict] = mapped_column(JSONB, default=dict)
 
 

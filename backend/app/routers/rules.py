@@ -5,10 +5,12 @@ from sqlalchemy.orm import Session
 from app.db.base import get_db
 from app.db.models import Rule
 from app.schemas import RuleIn, RuleOut
-from app.security import current_user
+from app.security import current_user, require_role
 from app.services import rules as rules_svc
 
 router = APIRouter(prefix="/rules", tags=["rules"])
+
+controller = require_role("controller")
 
 
 @router.get("", response_model=list[RuleOut])
@@ -17,7 +19,7 @@ def list_rules(db: Session = Depends(get_db), user: str = Depends(current_user))
 
 
 @router.post("", response_model=RuleOut)
-def create_rule(body: RuleIn, db: Session = Depends(get_db), user: str = Depends(current_user)):
+def create_rule(body: RuleIn, db: Session = Depends(get_db), user: str = Depends(controller)):
     rule = rules_svc.upsert(
         db,
         entity_id=body.entity_id,
@@ -35,7 +37,7 @@ def create_rule(body: RuleIn, db: Session = Depends(get_db), user: str = Depends
 
 
 @router.delete("/{rule_id}")
-def delete_rule(rule_id: int, db: Session = Depends(get_db), user: str = Depends(current_user)):
+def delete_rule(rule_id: int, db: Session = Depends(get_db), user: str = Depends(controller)):
     rule = db.get(Rule, rule_id)
     if not rule:
         raise HTTPException(404, "rule not found")

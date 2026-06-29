@@ -1,15 +1,40 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const TOKEN = process.env.NEXT_PUBLIC_API_TOKEN || "";
+const TOKEN_KEY = "flow_token";
+
+// Per-user JWT, minted by POST /auth/login and kept in localStorage. (No more
+// build-time NEXT_PUBLIC_API_TOKEN baked into the browser bundle.)
+export function getToken(): string {
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem(TOKEN_KEY) || "";
+}
+export function setToken(token: string) {
+  if (typeof window !== "undefined") window.localStorage.setItem(TOKEN_KEY, token);
+}
+export function clearToken() {
+  if (typeof window !== "undefined") window.localStorage.removeItem(TOKEN_KEY);
+}
+
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
 
 async function req(path: string, init?: RequestInit) {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (TOKEN) headers["Authorization"] = `Bearer ${TOKEN}`;
+  const token = getToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   const res = await fetch(`${BASE}${path}`, {
     headers,
     cache: "no-store",
     ...init,
   });
-  if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+  if (!res.ok) {
+    if (res.status === 401) clearToken();
+    throw new ApiError(res.status, `${res.status} ${await res.text()}`);
+  }
   return res.json();
 }
 
@@ -36,6 +61,16 @@ export type AuditLog = {
 };
 
 export const api = {
+  login: async (email: string, password: string) => {
+    const r = await req(`/auth/login`, {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    setToken(r.access_token);
+    return r as { email: string; role: string; access_token: string };
+  },
+  me: (): Promise<{ email: string; role: string }> => req(`/auth/me`),
+  logout: () => clearToken(),
   actions: (status = "pending"): Promise<ProposedAction[]> =>
     req(`/inbox/actions?status=${status}`),
   approve: (id: number) =>

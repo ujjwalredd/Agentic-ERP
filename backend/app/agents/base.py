@@ -16,10 +16,17 @@ def account_id(db: Session, entity_id: int, code: str) -> int | None:
     return a.id if a else None
 
 
-def pending_exists(db: Session, key: str, value) -> bool:
+def pending_exists(
+    db: Session, key: str, value, action_type: str | None = None
+) -> bool:
     """True if a still-pending draft already references this source (e.g. a bank
     line / bill). Used to make agent runs idempotent — re-firing the same event
-    must not create duplicate drafts that could each be approved (double-post)."""
+    must not create duplicate drafts that could each be approved (double-post).
+
+    Pass `action_type` to scope the check to one kind of draft, so different
+    agents keyed on the same source (e.g. a Reconciler `note` vs a Categorizer
+    `book_journal_entry` for the same bank line) don't suppress each other.
+    """
     stmt = (
         select(ProposedAction.id)
         .where(
@@ -28,6 +35,8 @@ def pending_exists(db: Session, key: str, value) -> bool:
         )
         .limit(1)
     )
+    if action_type is not None:
+        stmt = stmt.where(ProposedAction.action_type == action_type)
     return db.scalar(stmt) is not None
 
 

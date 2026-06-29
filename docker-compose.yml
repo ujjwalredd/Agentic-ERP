@@ -36,6 +36,10 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       API_TOKEN: ${API_TOKEN:-}
       API_USER: ${API_USER:-controller@demo}
+      JWT_SECRET: ${JWT_SECRET:-}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-720}
+      SEED_USER_EMAIL: ${SEED_USER_EMAIL:-controller@demo}
+      SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-demo1234}
     ports:
       - "8000:8000"
     volumes:
@@ -56,6 +60,10 @@ services:
       USE_MOCK_LLM: ${USE_MOCK_LLM:-false}
       API_TOKEN: ${API_TOKEN:-}
       API_USER: ${API_USER:-controller@demo}
+      JWT_SECRET: ${JWT_SECRET:-}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-720}
+      SEED_USER_EMAIL: ${SEED_USER_EMAIL:-controller@demo}
+      SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-demo1234}
     volumes:
       - ./backend:/code
     depends_on:
@@ -71,7 +79,6 @@ services:
     command: npm run dev
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
-      NEXT_PUBLIC_API_TOKEN: ${NEXT_PUBLIC_API_TOKEN:-}
     ports:
       - "3000:3000"
     volumes:

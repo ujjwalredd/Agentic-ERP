@@ -6,6 +6,10 @@ pgvector==0.3.6
 pydantic==2.10.4
 pydantic-settings==2.7.0
 redis==5.2.1
+alembic==1.14.0
+pyjwt==2.10.1
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.1
 python-dateutil==2.9.0.post0
 langgraph==0.2.60
 langchain-anthropic==0.3.1

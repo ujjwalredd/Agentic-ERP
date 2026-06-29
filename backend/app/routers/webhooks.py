@@ -14,9 +14,11 @@ from app.db.base import get_db
 from app.db.models import BankTransaction, Bill
 from app.events import bus
 from app.events.types import Event, BANK_LINE, INVOICE_RECEIVED
-from app.security import current_user
+from app.security import require_role
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
+
+controller = require_role("controller")
 
 
 class BankLineIn(BaseModel):
@@ -38,7 +40,7 @@ class InvoiceIn(BaseModel):
 def bank_webhook(
     body: BankLineIn,
     db: Session = Depends(get_db),
-    user: str = Depends(current_user),
+    user: str = Depends(controller),
 ):
     bt = BankTransaction(
         entity_id=body.entity_id,
@@ -66,7 +68,7 @@ def bank_webhook(
 def invoice_webhook(
     body: InvoiceIn,
     db: Session = Depends(get_db),
-    user: str = Depends(current_user),
+    user: str = Depends(controller),
 ):
     bill = Bill(
         entity_id=body.entity_id,

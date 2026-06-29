@@ -7,6 +7,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.db.models import (
     Account,
     Bill,
@@ -15,6 +16,7 @@ from app.db.models import (
     Invoice,
     JournalEntry,
     JournalLine,
+    User,
     VectorDoc,
 )
 
@@ -41,6 +43,25 @@ def _acct(db: Session, entity_id: int, code: str) -> Account:
     return db.scalar(
         select(Account).where(Account.entity_id == entity_id, Account.code == code)
     )
+
+
+def seed_users(db: Session) -> None:
+    """Seed a demo controller for JWT auth (idempotent). Only runs when JWT is
+    configured, so open-dev/mock setups need no user table content."""
+    if not settings.jwt_secret:
+        return
+    if db.scalar(select(User).where(User.email == settings.seed_user_email)):
+        return
+    from app.security import hash_password
+
+    db.add(
+        User(
+            email=settings.seed_user_email,
+            password_hash=hash_password(settings.seed_user_password),
+            role="controller",
+        )
+    )
+    db.commit()
 
 
 def seed_if_empty(db: Session) -> None:

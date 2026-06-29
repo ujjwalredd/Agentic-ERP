@@ -162,7 +162,7 @@ codebase fast.
 | LLM | **Anthropic Claude** (Opus/Sonnet/Haiku) | Strong reasoning; models routed per agent by capability. |
 | Backend API | **FastAPI** (Python 3.11) | Fast, typed, auto-generated `/docs`. |
 | Database | **Postgres + pgvector** | ACID ledger *and* vector similarity in one engine. |
-| Event bus | **Redis** pub/sub | Simple, reliable broker; webhooks/feeds are events. |
+| Event bus | **Redis Streams** (consumer groups) | Durable, at-least-once work queue: events survive a worker restart and multiple workers share the load. Failed events retry, then dead-letter. |
 | Embeddings | **sentence-transformers** (local) | Anthropic has no embeddings endpoint; runs offline. |
 | Frontend | **Next.js 15 / React 19 + Tailwind** | Modern app router, clean responsive UI. |
 | Packaging | **Docker Compose** | One command brings up all four services. |
@@ -187,9 +187,10 @@ Open:
 - **App** → http://localhost:3000
 - **API docs (Swagger)** → http://localhost:8000/docs
 
-On first boot the backend automatically creates the database, enables pgvector, builds all
-tables, and seeds demo data (3 entities, a chart of accounts, a bank feed, an overdue
-invoice, a vendor bill). No manual migration step.
+On first boot the backend automatically creates the database, enables pgvector, brings the
+schema to head with **Alembic migrations**, and seeds demo data (3 entities, a chart of
+accounts, a bank feed, an overdue invoice, a vendor bill — plus a demo controller user when
+`JWT_SECRET` is set). Schema changes ship as versioned migrations, so no DB wipe is needed.
 
 ## 8. Guided demo walkthrough
 
@@ -305,6 +306,7 @@ Full interactive docs at `http://localhost:8000/docs`. Summary:
 
 | Method & path | What it does |
 |---------------|--------------|
+| `POST /auth/login` · `GET /auth/me` | Per-user login → JWT; current identity + role. |
 | `GET  /inbox/actions?status=pending` | List draft proposals awaiting review. |
 | `POST /inbox/actions/{id}/approve` | **Approve** → post + audit (🔒 auth). |
 | `POST /inbox/actions/{id}/reject` | **Reject** → audit only (🔒 auth). |
@@ -317,7 +319,9 @@ Full interactive docs at `http://localhost:8000/docs`. Summary:
 | `GET  /observability/traces` · `/stats` | Live AI decision log + metrics. |
 | `GET  /observability/training-data[.jsonl]` | Labeled corpus export. |
 
-🔒 = requires `Authorization: Bearer <API_TOKEN>` **when** `API_TOKEN` is set (see below).
+🔒 = state-changing; requires the **controller** role. With `JWT_SECRET` set, send
+`Authorization: Bearer <jwt>` from `/auth/login`; otherwise the legacy `API_TOKEN` applies. A
+`viewer` role gets 403 on these. Reads accept any authenticated principal.
 
 ## 12. Configuration (environment variables)
 
@@ -328,9 +332,14 @@ All in `.env` (copy from `.env.example`):
 | `ANTHROPIC_API_KEY` | — | Your Claude API key. |
 | `USE_MOCK_LLM` | `false` | `true` = deterministic stubbed agents, **no API calls/cost**. Great for demos & tests. |
 | `CORS_ORIGINS` | `http://localhost:3000` | Browser origins allowed to call the API. |
-| `API_TOKEN` | empty | If set, write endpoints require this bearer token. Empty = open local-dev mode. |
-| `API_USER` | `controller@demo` | Identity stamped into the audit log when a token is used. |
-| `NEXT_PUBLIC_API_TOKEN` | empty | Frontend's copy of the token (must match `API_TOKEN`). |
+| `JWT_SECRET` | empty | **Recommended.** Set to enable per-user login (`POST /auth/login`). Write endpoints then require a per-user JWT and the audit log records the **real user's email**. Empty = fall back to the legacy shared-token / open-dev mode. |
+| `SEED_USER_EMAIL` / `SEED_USER_PASSWORD` | `controller@demo` / `demo1234` | Demo controller seeded on first boot when `JWT_SECRET` is set. |
+| `JWT_EXPIRE_MINUTES` | `720` | JWT lifetime. |
+| `API_TOKEN` | empty | Legacy shared-token gate, used **only when `JWT_SECRET` is empty**. Empty = open local-dev mode. |
+| `API_USER` | `controller@demo` | Identity stamped into the audit log when the shared token is used. |
+
+> The old `NEXT_PUBLIC_API_TOKEN` (which baked a token into the browser bundle) is **removed**.
+> The frontend now logs in via `/auth/login` and holds a short-lived JWT client-side.
 
 ## 13. Testing
 

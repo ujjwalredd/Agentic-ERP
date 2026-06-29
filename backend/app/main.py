@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.db.base import init_db
 from app.routers import (
+    auth,
     entities,
     inbox,
     ledger,
@@ -35,6 +36,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(inbox.router)
 app.include_router(ledger.router)
 app.include_router(reports.router)

@@ -18,16 +18,18 @@ from app.events.types import (
     INVOICE_RECEIVED,
 )
 from app.schemas import SimulateRequest
-from app.security import current_user
+from app.security import require_role
 
 router = APIRouter(prefix="/simulate", tags=["simulate"])
+
+controller = require_role("controller")
 
 
 @router.post("")
 def simulate(
     body: SimulateRequest,
     db: Session = Depends(get_db),
-    user: str = Depends(current_user),
+    user: str = Depends(controller),
 ):
     fired: list[dict] = []
 

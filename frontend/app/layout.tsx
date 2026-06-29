@@ -1,7 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import Nav from "@/components/Nav";
-import SimulatePanel from "@/components/SimulatePanel";
+import Shell from "@/components/Shell";
 
 export const metadata: Metadata = {
   title: "Flow — Agentic Accounting ERP",
@@ -12,13 +11,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <div className="flex min-h-screen">
-          <Nav />
-          <main className="flex-1">
-            <SimulatePanel />
-            <div className="p-6">{children}</div>
-          </main>
-        </div>
+        <Shell>{children}</Shell>
       </body>
     </html>
   );

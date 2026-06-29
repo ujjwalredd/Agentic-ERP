@@ -94,8 +94,8 @@ def _apply_stage_payable(db: Session, payload: dict) -> dict:
         return _apply_book_journal_entry(db, payload)
     bill = db.get(Bill, payload["bill_id"])
     if bill:
-        bill.status = "approved"
-    return {"bill_id": payload.get("bill_id"), "status": "approved"}
+        bill.status = "booked"  # payable recorded (not yet paid) — see BILL_STATUS
+    return {"bill_id": payload.get("bill_id"), "status": "booked"}
 
 
 def _apply_send_reminder(db: Session, payload: dict) -> dict:
@@ -223,7 +223,9 @@ def apply_edit(
     payload = dict(action.payload)
     entity_id = payload.get("entity_id")
 
-    # Re-point the GL (non-cash) line to the corrected account.
+    # Re-point the corrected expense line to the new account. We key off account
+    # TYPE (expense), not a hardcoded cash code, and require exactly one expense
+    # line — so we never corrupt a revenue inflow or a two-leg intercompany entry.
     if account_code:
         new_gl = db.scalar(
             select(Account).where(
@@ -232,10 +234,22 @@ def apply_edit(
         )
         if new_gl is None:
             raise ApprovalError(f"account {account_code} not found for entity {entity_id}")
-        for line in payload.get("lines", []):
+        if new_gl.type != "expense":
+            raise ApprovalError(
+                f"account {account_code} is {new_gl.type}, not an expense account"
+            )
+        lines = payload.get("lines", [])
+        expense_lines = []
+        for line in lines:
             acct = db.get(Account, line["account_id"])
-            if acct and acct.code != "1000":  # the GL/expense side, not cash
-                line["account_id"] = new_gl.id
+            if acct and acct.type == "expense":
+                expense_lines.append(line)
+        if len(expense_lines) != 1:
+            raise ApprovalError(
+                "edit not supported for this entry shape "
+                f"(expected exactly one expense line, found {len(expense_lines)})"
+            )
+        expense_lines[0]["account_id"] = new_gl.id
         payload["memo"] = f"{payload.get('description', '')} -> {new_gl.name}".strip()
         if payload.get("memory"):
             payload["memory"]["meta"] = {
