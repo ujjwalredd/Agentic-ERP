@@ -2,15 +2,15 @@ services:
   db:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_USER: flow
-      POSTGRES_PASSWORD: flow
-      POSTGRES_DB: flow
+      POSTGRES_USER: erp
+      POSTGRES_PASSWORD: erp
+      POSTGRES_DB: erp
     ports:
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U flow"]
+      test: ["CMD-SHELL", "pg_isready -U erp"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -29,7 +29,7 @@ services:
     build: ./backend
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     environment:
-      DATABASE_URL: postgresql+psycopg://flow:flow@db:5432/flow
+      DATABASE_URL: postgresql+psycopg://erp:erp@db:5432/erp
       REDIS_URL: redis://redis:6379/0
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       USE_MOCK_LLM: ${USE_MOCK_LLM:-false}
@@ -54,7 +54,7 @@ services:
     build: ./backend
     command: python -m app.worker
     environment:
-      DATABASE_URL: postgresql+psycopg://flow:flow@db:5432/flow
+      DATABASE_URL: postgresql+psycopg://erp:erp@db:5432/erp
       REDIS_URL: redis://redis:6379/0
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       USE_MOCK_LLM: ${USE_MOCK_LLM:-false}

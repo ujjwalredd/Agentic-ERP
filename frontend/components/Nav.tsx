@@ -16,8 +16,8 @@ export default function Nav() {
   return (
     <nav className="w-56 shrink-0 border-r border-neutral-200 p-4">
       <div className="mb-6">
-        <div className="text-lg font-bold tracking-tight">Flow</div>
-        <div className="text-xs text-neutral-500">Agentic Accounting ERP</div>
+        <div className="text-lg font-bold tracking-tight">Agentic ERP</div>
+        <div className="text-xs text-neutral-500">AI accounting, human approved</div>
       </div>
       <ul className="space-y-1">
         {links.map((l) => {

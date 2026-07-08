@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Flow — Agentic Accounting ERP", lifespan=lifespan)
+app = FastAPI(title="Agentic Accounting ERP", lifespan=lifespan)
 
 _origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
 app.add_middleware(

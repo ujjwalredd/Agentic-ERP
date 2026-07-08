@@ -12,13 +12,13 @@ jobs:
       db:
         image: pgvector/pgvector:pg16
         env:
-          POSTGRES_USER: flow
-          POSTGRES_PASSWORD: flow
-          POSTGRES_DB: flow
+          POSTGRES_USER: erp
+          POSTGRES_PASSWORD: erp
+          POSTGRES_DB: erp
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U flow"
+          --health-cmd "pg_isready -U erp"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -36,7 +36,7 @@ jobs:
       # Tests force mock-LLM (conftest), so no API key/spend. PG + Redis are real,
       # so the gated integration + bus tests actually run in CI.
       USE_MOCK_LLM: "true"
-      DATABASE_URL: postgresql+psycopg://flow:flow@localhost:5432/flow
+      DATABASE_URL: postgresql+psycopg://erp:erp@localhost:5432/erp
       REDIS_URL: redis://localhost:6379/0
 
     steps:

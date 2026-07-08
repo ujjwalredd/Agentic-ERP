@@ -31,7 +31,7 @@ export default function LoginPage() {
         className="w-80 space-y-4 rounded-lg border border-neutral-200 bg-white p-6 shadow-sm"
       >
         <div>
-          <div className="text-lg font-bold tracking-tight">Flow</div>
+          <div className="text-lg font-bold tracking-tight">Agentic Accounting ERP</div>
           <div className="text-xs text-neutral-500">Sign in to continue</div>
         </div>
         <label className="block text-sm">

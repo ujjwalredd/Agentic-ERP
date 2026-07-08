@@ -1,5 +1,5 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const TOKEN_KEY = "flow_token";
+const TOKEN_KEY = "erp_token";
 
 // Per-user JWT, minted by POST /auth/login and kept in localStorage. (No more
 // build-time NEXT_PUBLIC_API_TOKEN baked into the browser bundle.)

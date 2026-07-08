@@ -1,10 +1,10 @@
-# Flow — Agentic Accounting ERP (prototype)
+# Agentic Accounting ERP
 
 > An AI-native accounting system where **named AI agents do the bookkeeping** and humans
-> simply review and approve. Inspired by [LiveFlow's Flow](https://liveflow.com/flow-ai-workflow).
+> simply review and approve.
 > Powered by the **Anthropic API** (Claude) with **LangGraph** orchestration.
 
-This README is written so that **anyone** — engineer or not — can understand what this
+This README is written so that **anyone** engineer or not can understand what this
 project is, how it works, and how to run and extend it. Read it top to bottom for full
 context, or jump via the table of contents.
 
@@ -34,9 +34,7 @@ context, or jump via the table of contents.
 
 ## 1. What is this, in plain English?
 
-Traditional accounting software is a tool a *human* uses to record money movements. **Flow
-flips that around**: AI agents read each incoming transaction (a bank charge, an invoice, a
-bill) and do the accounting work themselves. A human's job becomes **supervising** — looking
+Traditional accounting software is a tool a *human* uses to record money movements. **Agentic Accounting ERP flips that around**: AI agents read each incoming transaction (a bank charge, an invoice, a bill) and do the accounting work themselves. A human's job becomes **supervising** looking
 at what the AI proposes and clicking **Approve** or **Reject**.
 
 Crucially, the AI can **never finalize anything on its own**. Every action it takes is saved
@@ -197,7 +195,7 @@ accounts, a bank feed, an overdue invoice, a vendor bill — plus a demo control
 This is the fastest way to *see* the whole product work. Each step uses the **Simulate** bar
 at the top of the app, which injects realistic events.
 
-1. **Open the Approval Inbox** (`/inbox`). It's empty, with a "How Flow works" explainer.
+1. **Open the Approval Inbox** (`/inbox`). It's empty, with a "How it works" explainer.
 2. **Click "Bank feed."** The Orchestrator wakes the Categorizer, which proposes a journal
    entry for each bank line. Drafts appear within ~3 seconds, each showing the agent, its
    confidence, and the exact debits/credits.

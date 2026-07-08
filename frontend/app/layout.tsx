@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Shell from "@/components/Shell";
 
 export const metadata: Metadata = {
-  title: "Flow — Agentic Accounting ERP",
+  title: "Agentic Accounting ERP",
   description: "AI agents do the accounting; humans approve.",
 };
 

@@ -1,0 +1,367 @@
+{
+ "version": 1,
+ "explanations": {
+  "frontend/components/Nav.tsx::Nav": {
+   "anchor": {
+    "file": "frontend/components/Nav.tsx",
+    "qualifiedName": "Nav",
+    "contentHash": "1c026250569b613554671e96"
+   },
+   "oneLiner": "Sidebar nav with active-route highlighting",
+   "detail": "Client component rendering a fixed 56-width sidebar of links. Highlights the link matching current path; no inputs, no side effects.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:15:22.039Z"
+  },
+  "frontend/app/login/page.tsx::LoginPage": {
+   "anchor": {
+    "file": "frontend/app/login/page.tsx",
+    "qualifiedName": "LoginPage",
+    "contentHash": "d1138f20b1dac34109b3a528"
+   },
+   "oneLiner": "Login form page, auths then routes to inbox",
+   "detail": "Client component rendering email/password form; on submit calls api.login and pushes /inbox on success. Holds local state for fields, error, and busy; shows error text and disables button while request runs.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:14:40.896Z"
+  },
+  "frontend/app/layout.tsx::RootLayout": {
+   "anchor": {
+    "file": "frontend/app/layout.tsx",
+    "qualifiedName": "RootLayout",
+    "contentHash": "3bedc6d0c56b8d078c9524dc"
+   },
+   "oneLiner": "Next.js root layout wrapping all pages",
+   "detail": "Renders the html/body shell for every route; receives page content as children. Wraps children in Shell (nav/chrome) and sets lang=\"en\".",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:14:49.516Z"
+  },
+  "frontend/components/InfoBanner.tsx::InfoBanner": {
+   "anchor": {
+    "file": "frontend/components/InfoBanner.tsx",
+    "qualifiedName": "InfoBanner",
+    "contentHash": "178eed8956b2a769911608f3"
+   },
+   "oneLiner": "Dismissible help banner persisted via localStorage",
+   "detail": "Client component showing 3-step \"How it works\" explainer; reads localStorage key \"flow_help_dismissed\" on mount to decide visibility, returns null when dismissed. Hide button sets that key to \"1\" and hides; starts hidden until effect runs, so SSR/first paint renders nothing (no flash).",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:14:58.697Z"
+  },
+  "backend/app/main.py::lifespan": {
+   "anchor": {
+    "file": "backend/app/main.py",
+    "qualifiedName": "lifespan",
+    "contentHash": "b3329de656c6c29391a5bf1c"
+   },
+   "oneLiner": "FastAPI lifespan handler; runs init_db on startup",
+   "detail": "Async context manager passed to FastAPI(lifespan=...). Calls init_db() before yield (startup), yields nothing after (no shutdown logic).",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:15:09.229Z"
+  },
+  "backend/app/main.py::health": {
+   "anchor": {
+    "file": "backend/app/main.py",
+    "qualifiedName": "health",
+    "contentHash": "1debe189e8ea5faebdb478a3"
+   },
+   "oneLiner": "Health-check endpoint returning static OK",
+   "detail": "Returns {\"status\": \"ok\"}. No inputs, no side effects; used for liveness/readiness probes.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:15:09.229Z"
+  },
+  "backend/alembic/env.py::run_migrations_offline": {
+   "anchor": {
+    "file": "backend/alembic/env.py",
+    "qualifiedName": "run_migrations_offline",
+    "contentHash": "272a49490a5a18e972889d49"
+   },
+   "oneLiner": "Emit migration SQL without DB connection",
+   "detail": "Configures Alembic context with a raw DB URL and literal_binds so SQL is rendered as a script instead of executed via a live connection. Uses named paramstyle, compares column types, and runs migrations inside one transaction.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:15:30.513Z"
+  },
+  "backend/alembic/env.py::run_migrations_online": {
+   "anchor": {
+    "file": "backend/alembic/env.py",
+    "qualifiedName": "run_migrations_online",
+    "contentHash": "77a6f06931722efd00546d9a"
+   },
+   "oneLiner": "Run migrations against a live DB connection",
+   "detail": "Builds an Engine from the alembic.ini sqlalchemy.* config with a NullPool (no connection reuse), opens a connection, and runs migrations in a transaction with type comparison enabled. Applies schema changes directly to the target database.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:15:30.513Z"
+  },
+  "backend/app/agents/bill_handler.py::_mock": {
+   "anchor": {
+    "file": "backend/app/agents/bill_handler.py",
+    "qualifiedName": "_mock",
+    "contentHash": "e4a95f5e8f3ca355aab1c3ae"
+   },
+   "oneLiner": "Stub LLM response for bill categorization",
+   "detail": "Ignores user arg, returns fixed dict with account_code 5000, name 'Software Subscriptions', confidence 0.88. Passed as fallback to complete_json when no real LLM.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:15:42.773Z"
+  },
+  "backend/app/agents/bill_handler.py::run": {
+   "anchor": {
+    "file": "backend/app/agents/bill_handler.py",
+    "qualifiedName": "run",
+    "contentHash": "4b94e9263db0e462a6130cbb"
+   },
+   "oneLiner": "Build proposed AP journal entry from bill data",
+   "detail": "Takes db Session and bill dict (entity_id, vendor, amount, bill_id, lines). Dedups on bill_id via pending_exists, calls complete_json to pick GL account (falls back to 5000), builds debit-GL/credit-AP(2000) lines, returns ProposedAction via propose (action_type 'stage_payable') or None if duplicate.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:15:42.773Z"
+  },
+  "backend/app/routers/webhooks.py::BankLineIn": {
+   "anchor": {
+    "file": "backend/app/routers/webhooks.py",
+    "qualifiedName": "BankLineIn",
+    "contentHash": "4021b1d8bb6369f54e2b2979"
+   },
+   "oneLiner": "Pydantic body schema for bank webhook",
+   "detail": "Fields: entity_id int, amount float, description str, optional date str. Validates incoming bank line payload; date is ISO string or null.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:01.618Z"
+  },
+  "backend/app/routers/webhooks.py::InvoiceIn": {
+   "anchor": {
+    "file": "backend/app/routers/webhooks.py",
+    "qualifiedName": "InvoiceIn",
+    "contentHash": "97452a57ce02d049f24c5548"
+   },
+   "oneLiner": "Pydantic body schema for invoice webhook",
+   "detail": "Fields: entity_id int, vendor str, amount float, optional due_date str, lines dict default empty. Validates incoming invoice payload.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:01.618Z"
+  },
+  "backend/app/routers/webhooks.py::bank_webhook": {
+   "anchor": {
+    "file": "backend/app/routers/webhooks.py",
+    "qualifiedName": "bank_webhook",
+    "contentHash": "b0194c4958f4f00ca88bc879"
+   },
+   "oneLiner": "Persist bank txn, publish BANK_LINE event",
+   "detail": "Takes BankLineIn, DB session, controller-auth user. Writes BankTransaction (amount via Decimal(str), date defaults today), commits, publishes Event on bus, returns bank_transaction_id and event_id. Float->Decimal via str avoids binary rounding; commit before event so id exists.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:01.618Z"
+  },
+  "backend/app/routers/webhooks.py::invoice_webhook": {
+   "anchor": {
+    "file": "backend/app/routers/webhooks.py",
+    "qualifiedName": "invoice_webhook",
+    "contentHash": "69641a04871e7e80381cf387"
+   },
+   "oneLiner": "Persist bill, publish INVOICE_RECEIVED event",
+   "detail": "Takes InvoiceIn, DB session, controller-auth user. Writes Bill (amount via Decimal(str), due_date defaults today, lines dict), commits, publishes Event, returns bill_id and event_id. Event data re-floats amount for JSON; commit precedes publish so bill.id set.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:01.618Z"
+  },
+  "backend/app/agents/graph.py::GState": {
+   "anchor": {
+    "file": "backend/app/agents/graph.py",
+    "qualifiedName": "GState",
+    "contentHash": "7a24c8f5627fbf56ac67e5b4"
+   },
+   "oneLiner": "TypedDict holding graph state across nodes",
+   "detail": "Keys: event_type, data, route, action_ids, source_event_id. total=False means all keys optional; nodes mutate and pass it along.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:16.189Z"
+  },
+  "backend/app/agents/graph.py::_classify": {
+   "anchor": {
+    "file": "backend/app/agents/graph.py",
+    "qualifiedName": "_classify",
+    "contentHash": "ba927a8032a25db20989bc15"
+   },
+   "oneLiner": "Orchestrator node picks specialist route",
+   "detail": "Reads event_type, looks up ROUTING default, asks LLM (complete_json) for a route, validates it against ROUTING values else falls back to default. Writes route into state and records an Orchestrator trace; mock returns default.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:16.189Z"
+  },
+  "backend/app/agents/graph.py::_make_specialist": {
+   "anchor": {
+    "file": "backend/app/agents/graph.py",
+    "qualifiedName": "_make_specialist",
+    "contentHash": "d9cad5e61a66c68caeb83ad2"
+   },
+   "oneLiner": "Wraps agent run fn into a graph node",
+   "detail": "Returns a node that pulls db from _db_ctx, calls fn(db, data+source_event_id), and appends returned ProposedAction id(s) to state['action_ids']. Handles list or single action return; ignores falsy actions.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:16.189Z"
+  },
+  "backend/app/agents/graph.py::_build": {
+   "anchor": {
+    "file": "backend/app/agents/graph.py",
+    "qualifiedName": "_build",
+    "contentHash": "47227f0438b7c45ddcb8ba13"
+   },
+   "oneLiner": "Builds and compiles the LangGraph state graph",
+   "detail": "Adds classify node plus five specialist nodes (categorizer, bill_handler, ar_clerk, consolidator, closer). Edges: START→classify, conditional edge routes on state['route'], each specialist→END. Returns compiled graph.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:16.189Z"
+  },
+  "backend/app/agents/graph.py::run_event": {
+   "anchor": {
+    "file": "backend/app/agents/graph.py",
+    "qualifiedName": "run_event",
+    "contentHash": "d857218dbf2380b1187a889a"
+   },
+   "oneLiner": "Entry point: run graph for one event, return action ids",
+   "detail": "Lazily builds/caches global _graph, sets db into _db_ctx contextvar, invokes graph with event_type/data/source_event_id, returns result['action_ids']. Resets contextvar in finally; not thread-safe on _graph init.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:16.189Z"
+  },
+  "backend/alembic/versions/0001_initial.py::upgrade": {
+   "anchor": {
+    "file": "backend/alembic/versions/0001_initial.py",
+    "qualifiedName": "upgrade",
+    "contentHash": "16eb53eaf7c9b1aab255e170"
+   },
+   "oneLiner": "Create all ORM-defined tables",
+   "detail": "Grabs Alembic connection via op.get_bind(), calls Base.metadata.create_all to emit CREATE TABLE for every model registered on Base. Bypasses incremental DDL—whole schema from metadata, so migration drifts if models change without new revision.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:27.434Z"
+  },
+  "backend/alembic/versions/0001_initial.py::downgrade": {
+   "anchor": {
+    "file": "backend/alembic/versions/0001_initial.py",
+    "qualifiedName": "downgrade",
+    "contentHash": "24689262d73bfede5b3aec0f"
+   },
+   "oneLiner": "Drop all ORM-defined tables",
+   "detail": "Grabs connection via op.get_bind(), calls Base.metadata.drop_all to DROP every table in Base.metadata. Destroys all data; drop order respects FK dependencies but anything not in metadata is left behind.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:27.434Z"
+  },
+  "backend/app/agents/reconciler.py::_candidate_matches": {
+   "anchor": {
+    "file": "backend/app/agents/reconciler.py",
+    "qualifiedName": "_candidate_matches",
+    "contentHash": "ee8ab7ad47dc0731a9441934"
+   },
+   "oneLiner": "Find posted entries matching bank txn amount",
+   "detail": "Returns all posted JournalEntries on same entity with a code-1000 cash line whose max(debit,credit) equals |bt.amount|, skipping entries already claimed by another bank line. Returns full list so caller detects ambiguity; iterates entry.lines in Python so cost grows with entry count.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:39.328Z"
+  },
+  "backend/app/agents/reconciler.py::_date_key": {
+   "anchor": {
+    "file": "backend/app/agents/reconciler.py",
+    "qualifiedName": "_date_key",
+    "contentHash": "636ac8bab18f45eccf2fb025"
+   },
+   "oneLiner": "Builds sort key for date-proximity",
+   "detail": "Returns a lambda taking a JournalEntry, yielding absolute day distance from bt.date. Missing either date yields 10**9 sentinel so undated entries sort last.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:39.328Z"
+  },
+  "backend/app/agents/reconciler.py::run": {
+   "anchor": {
+    "file": "backend/app/agents/reconciler.py",
+    "qualifiedName": "run",
+    "contentHash": "5fb46c1b396a7463df024ffa"
+   },
+   "oneLiner": "Propose reconciliation actions for unmatched bank txns",
+   "detail": "Loads entity's unmatched BankTransactions and emits ProposedActions: match_bank on exactly one candidate (confidence 0.93 same-day else 0.75), a note on multiple candidates (0.5, suggests date-closest), or a variance note on zero (0.6). Skips txns with an existing pending match_bank/note; each branch calls propose() which writes to db.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:39.328Z"
+  },
+  "backend/app/routers/entities.py::list_entities": {
+   "anchor": {
+    "file": "backend/app/routers/entities.py",
+    "qualifiedName": "list_entities",
+    "contentHash": "1e49abea71e0316dd7130f97"
+   },
+   "oneLiner": "Returns all entities as dict list ordered by id",
+   "detail": "GET-style handler. Injects DB session via Depends(get_db), runs SELECT on Entity ordered by id, maps each to dict with id, name, parent_id, currency. No pagination — returns entire table.",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:50.228Z"
+  }
+ },
+ "fileSummaries": {
+  "frontend/components/Nav.tsx": {
+   "file": "frontend/components/Nav.tsx",
+   "overview": "Renders sidebar nav links; highlights active route via `usePathname`.",
+   "aggHash": "8407663b180fe8bed7e0cd65",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:15:24.532Z"
+  },
+  "frontend/app/login/page.tsx": {
+   "file": "frontend/app/login/page.tsx",
+   "overview": "Client login page. Owns email/password form state, calls `api` to authenticate, routes to inbox on success.",
+   "aggHash": "a6f8422eb4f891eb3431ae7c",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:14:44.280Z"
+  },
+  "frontend/app/layout.tsx": {
+   "file": "frontend/app/layout.tsx",
+   "overview": "Next.js root layout. Wraps every page in `Shell` chrome and sets global metadata; imports `globals.css`.",
+   "aggHash": "773b237b5e00f2ff28c6481a",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:14:52.656Z"
+  },
+  "frontend/components/InfoBanner.tsx": {
+   "file": "frontend/components/InfoBanner.tsx",
+   "overview": "Renders dismissible help banner. Tracks dismissed state via localStorage so banner stays hidden across sessions.",
+   "aggHash": "9e6dd4e17af3fad0c603071a",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:15:02.957Z"
+  },
+  "backend/app/main.py": {
+   "file": "backend/app/main.py",
+   "overview": "FastAPI app entrypoint. Builds app, sets CORS, mounts all routers, runs `init_db` on startup, exposes health check.",
+   "aggHash": "1fd56c2285c9a67b5d0ea1c4",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:15:12.312Z"
+  },
+  "backend/alembic/env.py": {
+   "file": "backend/alembic/env.py",
+   "overview": "Alembic migration entrypoint. Wires app settings and `Base.metadata` into Alembic context, runs migrations offline (SQL emit) or online (live DB connection).",
+   "aggHash": "8d0cc0d7e9b5b7c6f39b3046",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:15:33.790Z"
+  },
+  "backend/app/agents/bill_handler.py": {
+   "file": "backend/app/agents/bill_handler.py",
+   "overview": "Owns AP bill intake: turns bill data into proposed accounts-payable journal entry via LLM categorization, writing a `ProposedAction`. Guards against duplicates with `pending_exists`, resolves accounts through `account_id`, submits via shared `propose` helper.",
+   "aggHash": "593c16555c860ac265742004",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:15:48.228Z"
+  },
+  "backend/app/routers/webhooks.py": {
+   "file": "backend/app/routers/webhooks.py",
+   "overview": "Owns HTTP webhook ingestion. Two endpoints persist inbound bank transactions and vendor bills, then publish `BANK_LINE`/`INVOICE_RECEIVED` events to bus for downstream processing.",
+   "aggHash": "1fafefcdab0f46f6f2d065c2",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:05.421Z"
+  },
+  "backend/app/agents/graph.py": {
+   "file": "backend/app/agents/graph.py",
+   "overview": "Owns the LangGraph orchestration: defines graph state, classifier routing node, and specialist node wrappers. Compiles the event-processing graph and exposes `run_event` as entry point dispatching one event to the right agent (ar_clerk, bill_handler, categorizer, closer, consolidator).",
+   "aggHash": "afc13ae8b2091716d43cef19",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:20.799Z"
+  },
+  "backend/alembic/versions/0001_initial.py": {
+   "file": "backend/alembic/versions/0001_initial.py",
+   "overview": "Initial Alembic migration. Creates and drops all ORM tables from `Base.metadata`, defining the DB schema baseline for the app.",
+   "aggHash": "8c8d9268534a7227640ba2d1",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:30.562Z"
+  },
+  "backend/app/agents/reconciler.py": {
+   "file": "backend/app/agents/reconciler.py",
+   "overview": "Reconciler agent: matches unmatched `BankTransaction` rows to posted `JournalEntry` records by amount and date proximity, then proposes reconciliation `ProposedAction`s. Read-only analysis that emits proposals via `propose`, guarded by `pending_exists` to avoid duplicates.",
+   "aggHash": "e1f83e65a957b0a8bec5d19a",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:43.593Z"
+  },
+  "backend/app/routers/entities.py": {
+   "file": "backend/app/routers/entities.py",
+   "overview": "Owns entity read API. Exposes `list_entities` GET route returning all `Entity` rows via SQLAlchemy `select`, mounted on shared `APIRouter`.",
+   "aggHash": "5dd7806f97b750ffeef583bc",
+   "model": "claude-code",
+   "createdAt": "2026-07-08T16:16:53.856Z"
+  }
+ },
+ "directorySummaries": {}
+}

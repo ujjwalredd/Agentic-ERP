@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    database_url: str = "postgresql+psycopg://flow:flow@localhost:5432/flow"
+    database_url: str = "postgresql+psycopg://erp:erp@localhost:5432/erp"
     redis_url: str = "redis://localhost:6379/0"
     anthropic_api_key: str = ""
     use_mock_llm: bool = False
@@ -39,11 +39,11 @@ class Settings(BaseSettings):
     # --- event bus (Redis Streams) ---------------------------------------
     # Stream key, consumer group, and dead-letter stream. Multiple worker
     # replicas share one group so each event is processed once (at-least-once).
-    event_channel: str = "flow.events"
-    event_group: str = "flow-workers"
+    event_channel: str = "erp.events"
+    event_group: str = "erp-workers"
     # Per-consumer name; defaults to the hostname so replicas are distinct.
     event_consumer: str = ""
-    event_dead_letter: str = "flow.events.dead"
+    event_dead_letter: str = "erp.events.dead"
     # Max delivery attempts before a message is moved to the dead-letter stream.
     event_max_deliveries: int = 5
     # Idle ms before an unacked pending message is reclaimed by another consumer.
